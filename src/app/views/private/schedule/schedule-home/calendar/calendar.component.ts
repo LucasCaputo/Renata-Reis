@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { UtilsService } from 'src/app/shared/services/utils/utils.service';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { CustomerService } from '../../../customer/customer.service';
+import { WhatsAppService } from '../../../whats-app/whats-app.service';
 
 @Component({
   selector: 'app-calendar',
@@ -63,7 +64,8 @@ export class CalendarComponent implements OnInit {
     private auth: AuthService,
     private router: Router,
     private utilsService: UtilsService,
-    private customerService: CustomerService
+    private customerService: CustomerService,
+    private whatsAppService: WhatsAppService
   ) {}
 
   ngOnInit(): void {
@@ -251,6 +253,14 @@ export class CalendarComponent implements OnInit {
               paciente_id: response.paciente.id,
             });
 
+            let scheduling = {
+              id: response.id,
+              title: response.title,
+              start: this.utilsService.formatStringData(start),
+              end: this.utilsService.formatStringData(end),
+              paciente_id: response.paciente.id,
+            };
+
             this.scheduleService
               .getScheduling(this.user)
               .subscribe((response) => {
@@ -260,6 +270,50 @@ export class CalendarComponent implements OnInit {
 
                 // debugger;
               });
+
+            this.customerService.getCustomerId(response.paciente.id).subscribe(
+              (customer) => {
+                this.whatsAppService.getWhatsAppSession().subscribe(
+                  (result) => {
+                    this.whatsAppService
+                      .postWhatsAppMessage({
+                        sessionName: this.user?.login.slice(0, 4),
+                        number: '55' + customer.telefone1,
+                        text: `*[Atendente Virtual]*
+Oi, ${
+                          customer.nome
+                        }! Foi criado um agendamento para você na data e horário: ${scheduling.start.slice(
+                          8,
+                          10
+                        )}/${scheduling.start.slice(
+                          5,
+                          7
+                        )}/${scheduling.start.slice(
+                          2,
+                          4
+                        )}, às ${schedule.start.slice(
+                          11,
+                          16
+                        )} _Caso seja um equivoco, entre em contato, respondendo esta mensagem_`,
+                      })
+                      .subscribe(
+                        (result) => {
+                          console.log(result);
+                        },
+                        (error) => {
+                          console.log(error);
+                        }
+                      );
+                  },
+                  (error) => {
+                    console.log(error);
+                  }
+                );
+              },
+              (error) => {
+                console.log(error);
+              }
+            );
           },
           (error) => {
             console.log(error);

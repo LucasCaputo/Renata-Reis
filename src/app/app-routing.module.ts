@@ -31,6 +31,13 @@ const routes: Routes = [
             (m) => m.ScheduleModule
           ),
       },
+      {
+        path: 'whatsapp',
+        loadChildren: () =>
+          import('./views/private/whats-app/whats-app.module').then(
+            (m) => m.WhatsAppModule
+          ),
+      },
     ],
   },
   {
